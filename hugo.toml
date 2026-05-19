@@ -5,8 +5,11 @@ title = 'T-Microcement'
 
 [params]
   description = 'Microcement finishes for walls, floors, bathrooms and kitchens.'
-  email = 'hello@t-microcement.com'
-  phone = '+41 00 000 00 00'
+  # WhatsApp is the primary contact channel; phone number is the same.
+  # Display string keeps the human-friendly formatting; the URL strips
+  # non-digits per wa.me's format.
+  whatsapp_display = '+62 895-6051-61882'
+  whatsapp_url     = 'https://wa.me/62895605161882'
 
 [minify]
   minifyOutput = true

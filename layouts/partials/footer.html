@@ -5,13 +5,16 @@
       <p class="foot-tag">Microcement system · Bali</p>
     </div>
     <div class="foot-col">
-      <p><a href="mailto:{{ .Site.Params.email }}">{{ .Site.Params.email }}</a></p>
+      {{ with .Site.Params.whatsapp_url }}
+        <p><a href="{{ . }}">WhatsApp {{ $.Site.Params.whatsapp_display }}</a></p>
+      {{ end }}
       <p><a href="/contact/">Contact</a></p>
     </div>
     <div class="foot-col">
       <p><a href="/product/">Product</a></p>
       <p><a href="/gallery/">Gallery</a></p>
       <p><a href="/know-how/">Know-how</a></p>
+      <p><a href="/downloads/">Downloads</a></p>
     </div>
     <div class="foot-col foot-legal">
       <p>&copy; {{ now.Format "2006" }} T-Microcement</p>
