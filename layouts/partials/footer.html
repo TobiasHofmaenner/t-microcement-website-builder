@@ -1,6 +1,21 @@
 <footer class="site-footer">
   <div class="wrap">
-    <p>&copy; {{ now.Format "2006" }} T-Microcement</p>
-    <p><a href="mailto:{{ .Site.Params.email }}">{{ .Site.Params.email }}</a></p>
+    <div class="foot-col">
+      <p class="foot-brand">T-Microcement</p>
+      <p class="foot-tag">Microcement system · Bali</p>
+    </div>
+    <div class="foot-col">
+      <p><a href="mailto:{{ .Site.Params.email }}">{{ .Site.Params.email }}</a></p>
+      <p><a href="/contact/">Contact</a></p>
+    </div>
+    <div class="foot-col">
+      <p><a href="/product/">Product</a></p>
+      <p><a href="/gallery/">Gallery</a></p>
+      <p><a href="/know-how/">Know-how</a></p>
+    </div>
+    <div class="foot-col foot-legal">
+      <p>&copy; {{ now.Format "2006" }} T-Microcement</p>
+      <p class="muted">Also known as Micro-T-Cement.</p>
+    </div>
   </div>
 </footer>

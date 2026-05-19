@@ -1,0 +1,31 @@
+{{ define "main" }}
+<article class="page page-gallery">
+  <header class="page-head wrap">
+    <h1>{{ .Title }}</h1>
+    {{ with .Content }}<div class="page-intro">{{ . }}</div>{{ end }}
+  </header>
+
+  {{ with .Params.groups }}
+    {{ range . }}
+      <section class="gallery-group">
+        <div class="wrap">
+          <h2 class="section-heading">{{ .heading }}</h2>
+          {{ with .note }}<p class="section-note">{{ . }}</p>{{ end }}
+        </div>
+        <div class="wrap gallery-grid-wrap">
+          <ul class="gallery-grid">
+            {{ range .photos }}
+              <li class="gallery-cell">
+                <a href="{{ .src }}" class="gallery-link" aria-label="{{ .alt }}">
+                  <img src="{{ .src }}" alt="{{ .alt }}" loading="lazy">
+                </a>
+                {{ with .caption }}<p class="gallery-caption">{{ . }}</p>{{ end }}
+              </li>
+            {{ end }}
+          </ul>
+        </div>
+      </section>
+    {{ end }}
+  {{ end }}
+</article>
+{{ end }}

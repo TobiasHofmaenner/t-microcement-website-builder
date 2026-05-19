@@ -1,5 +1,67 @@
 {{ define "main" }}
-<section class="hero">
-  {{ .Content }}
+{{ $p := .Params }}
+
+<section class="hero hero-home" aria-label="Introduction">
+  {{ with $p.hero_image }}
+    <div class="hero-media">
+      <img src="{{ . }}" alt="{{ $p.hero_image_alt | default "" }}" loading="eager" fetchpriority="high">
+    </div>
+  {{ end }}
+  <div class="hero-copy wrap">
+    {{ with $p.hero_eyebrow }}<p class="eyebrow">{{ . }}</p>{{ end }}
+    {{ with $p.hero_title }}<h1>{{ . }}</h1>{{ end }}
+    {{ with $p.hero_subtitle }}<p class="lede">{{ . }}</p>{{ end }}
+    <p class="hero-ctas">
+      {{ with $p.hero_cta_label }}<a class="btn btn-primary" href="{{ $p.hero_cta_href }}">{{ . }}</a>{{ end }}
+      {{ with $p.hero_cta_alt_label }}<a class="btn btn-ghost" href="{{ $p.hero_cta_alt_href }}">{{ . }}</a>{{ end }}
+    </p>
+  </div>
 </section>
+
+{{ with $p.usps }}
+<section class="section section-usps">
+  <div class="wrap">
+    {{ with $.Params.usp_heading }}<h2 class="section-heading">{{ . }}</h2>{{ end }}
+    <ul class="usp-grid">
+      {{ range . }}
+        <li class="usp-card">
+          <h3>{{ .title }}</h3>
+          <p>{{ .body }}</p>
+        </li>
+      {{ end }}
+    </ul>
+  </div>
+</section>
+{{ end }}
+
+{{ with $p.gallery_teaser }}
+<section class="section section-teaser">
+  <div class="wrap">
+    {{ with $.Params.gallery_teaser_heading }}<h2 class="section-heading">{{ . }}</h2>{{ end }}
+    <div class="teaser-grid">
+      {{ range . }}
+        <a href="/gallery/" class="teaser-tile">
+          <img src="{{ .image }}" alt="{{ .alt }}" loading="lazy">
+        </a>
+      {{ end }}
+    </div>
+    {{ with $.Params.gallery_teaser_cta_label }}
+      <p class="section-cta"><a href="{{ $.Params.gallery_teaser_cta_href }}">{{ . }}</a></p>
+    {{ end }}
+  </div>
+</section>
+{{ end }}
+
+{{ with $p.closing_heading }}
+<section class="section section-close">
+  <div class="wrap">
+    <h2 class="section-heading">{{ . }}</h2>
+    {{ with $.Params.closing_body }}<p class="lede">{{ . }}</p>{{ end }}
+    {{ with $.Params.closing_cta_label }}
+      <p><a class="btn btn-primary" href="{{ $.Params.closing_cta_href }}">{{ . }}</a></p>
+    {{ end }}
+  </div>
+</section>
+{{ end }}
+
 {{ end }}
