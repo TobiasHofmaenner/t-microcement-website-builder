@@ -3,4 +3,5 @@
 public
 resources
 .hugo_build.lock
+.content-checkout
 README.md

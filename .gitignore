@@ -3,8 +3,11 @@ resources/
 .hugo_build.lock
 .content-checkout/
 
-# Local-dev: these dirs are symlinked from a sibling content checkout,
-# never committed. CI populates them by cp from .content-checkout/.
+# Local-dev: these are copied (or symlinked) from a sibling content
+# checkout, never committed. CI populates them by cp from .content-checkout/.
+# Anything Hugo touches now lives in the content repo.
 /content
 /static
 /assets
+/layouts
+/hugo.toml

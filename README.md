@@ -1,18 +1,21 @@
 # t-microcement-website-builder
 
-Build pipeline + theme for [www.t-microcement.com](https://www.t-microcement.com/).
-The **operator** owns this repo. The customer's editable content lives
-in a sibling repo:
-[`t-microcement-content`](https://github.com/TobiasHofmaenner/t-microcement-content).
+Build pipeline for [www.t-microcement.com](https://www.t-microcement.com/).
+The **operator** owns this repo. Everything Hugo renders — content,
+layouts, CSS, site config — lives in the sibling repo
+[`t-microcement-content`](https://github.com/TobiasHofmaenner/t-microcement-content)
+which the customer co-owns.
 
 ## Architecture
 
 ```
               ┌─────────────────────────┐
-              │ t-microcement-content   │   (customer-facing,
-              │   content/*.md          │    public, edit freely)
-              │   static/*.{jpg,svg}    │
+              │ t-microcement-content   │   (customer-facing, public,
+              │   hugo.toml             │    edit freely — this is a
+              │   layouts/              │    self-contained Hugo site;
+              │   content/*.md          │    `hugo server` just works)
               │   assets/css/main.css   │
+              │   static/*.{jpg,svg}    │
               └────────────┬────────────┘
                            │ checked out at build time
                            ▼
@@ -20,8 +23,6 @@ in a sibling repo:
               │ t-microcement-website-  │   (this repo, operator-owned,
               │ -builder                │    controls what code runs)
               │   Dockerfile            │
-              │   layouts/              │
-              │   hugo.toml             │
               │   .github/workflows/    │
               └────────────┬────────────┘
                            │ docker build + push
@@ -32,37 +33,29 @@ in a sibling repo:
                      cluster pulls + serves
 ```
 
-## Why two repos
+## Why the split
 
-- **Trust boundary** — customer can edit content / static / CSS freely
-  without touching what code runs in the cluster. The Dockerfile, GH
-  Actions workflow, and Hugo layouts stay locked to operator review.
-  The boundary is intentionally drawn at "things that build an image"
-  vs "things the image renders" — note that this *does not* sandbox the
-  content repo from injecting HTML/JS into the served site (Hugo's
-  goldmark `unsafe = true` is on, so raw HTML in markdown renders).
-  That's the explicit trade-off — we don't try to prevent the customer
-  from injecting client-side script, only from running server-side code
-  in the cluster.
-- **Hand-off** — when the customer takes over content editing, you
-  transfer ownership of the content repo only. The builder stays yours.
-- **Cleanliness** — content is the thing that changes weekly; the
-  builder is the thing that changes yearly. Separate lifecycles.
-
-## Coupling notes (don't break these)
-
-- `layouts/_default/baseof.html` references `assets/css/main.css` via
-  Hugo Pipes. If the content repo renames or removes that file, the
-  build fails. Keep the filename stable.
-- `hugo.toml` is operator-owned. If the customer wants new front-matter
-  fields or site params surfaced, that's a builder-side change.
+- **Operator control surface = container only.** Dockerfile pins the
+  Hugo version and the runtime base image. GH Actions workflow controls
+  what gets pushed to GHCR and when. Everything else — site behaviour,
+  HTML output, configuration — is in the content repo where the
+  customer can iterate.
+- **Trust boundary**, explicitly: the customer can write arbitrary HTML
+  via markdown (Hugo's `goldmark unsafe = true` is on) and arbitrary
+  Hugo template logic in `layouts/`. They cannot change what runs in
+  the cluster, what container is published, or how it's deployed. The
+  boundary is "code that runs in the cluster" vs "everything else."
+- **Hand-off**: transfer ownership of the content repo to take the
+  customer fully self-serve. The builder stays yours.
+- **Lifecycles**: content changes weekly. Builder changes yearly when
+  Hugo or the base image gets bumped.
 
 ## Build triggers
 
 The workflow runs on:
-- **push to main** here (Dockerfile / layouts / hugo.toml changes)
+- **push to main** here (Dockerfile or CI changes)
 - **schedule** every hour at :17 (picks up content repo changes)
-- **workflow_dispatch** (manual "Run workflow" — for immediate rebuild
+- **workflow_dispatch** (manual "Run workflow" — immediate rebuild
   after a content commit)
 
 Hourly cadence avoids the cross-repo PAT/App setup needed for instant
@@ -70,27 +63,30 @@ content-push → rebuild. Upgrade path: add a fine-grained PAT in the
 content repo and a `repository_dispatch` step here. Not done in v1 —
 manual dispatch covers it.
 
-## Local development
-
-```bash
-# Pull the content repo as a sibling, symlink it in
-git clone https://github.com/TobiasHofmaenner/t-microcement-content.git ../t-microcement-content
-ln -sf ../t-microcement-content/content ./content
-ln -sf ../t-microcement-content/static  ./static
-ln -sf ../t-microcement-content/assets  ./assets
-
-hugo server -D    # http://localhost:1313
-```
-
-The symlinks are in `.gitignore` — never committed.
-
 ## How a push deploys
 
 1. CI builds `ghcr.io/tobiashofmaenner/t-microcement-website-builder:main-<unix-ts>-<sha>`
 2. Flux image-reflector-controller polls GHCR within 1 min
 3. image-automation-controller rewrites the image tag in
    [thf-infra](https://github.com/TobiasHofmaenner/thf-infra)'s
-   `apps/customers/t-microcement/website/app/deployment.yaml`
+   `apps/customers/t-microcement/website/app/deployment.yaml` and
+   pushes a `chore(images)` commit as fluxcdbot
 4. Flux applies the new tag, pods roll, site is live
 
 End-to-end: ~3–5 minutes from `git push` to live.
+
+## Local testing of the build
+
+You usually don't need to. The Dockerfile is the source of truth and
+CI proves it green. If you do want to test container behaviour locally:
+
+```bash
+git clone https://github.com/TobiasHofmaenner/t-microcement-content.git ../t-microcement-content
+cp -r ../t-microcement-content/{content,static,assets,layouts} ./
+cp    ../t-microcement-content/hugo.toml ./
+docker build -t t-microcement-website:local .
+docker run --rm -p 8080:8080 t-microcement-website:local   # http://localhost:8080
+```
+
+For previewing Hugo changes without Docker, use `hugo server -D`
+directly from the **content** repo — it's self-contained.
