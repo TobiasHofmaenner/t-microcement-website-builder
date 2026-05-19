@@ -1,3 +1,9 @@
 public/
 resources/
 .hugo_build.lock
+.content-checkout/
+
+# Local-dev: these dirs are symlinked from a sibling content checkout,
+# never committed. CI populates them by cp from .content-checkout/.
+/content
+/static

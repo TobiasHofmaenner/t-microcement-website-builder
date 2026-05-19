@@ -1,9 +1,16 @@
 name: Release
 
 on:
+  # Triggered when the builder itself changes (Dockerfile, layouts, etc.)
   push:
     branches: [main]
+  # Manual rebuild — useful right after a content commit if you don't
+  # want to wait for the scheduled run. (Actions tab → Run workflow.)
   workflow_dispatch:
+  # Hourly rebuild — picks up changes from the content repo since the
+  # last build. v1 trade-off: avoids the cross-repo PAT/App setup.
+  schedule:
+    - cron: '17 * * * *'
 
 permissions:
   contents: read
@@ -13,7 +20,21 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout builder (this repo)
+        uses: actions/checkout@v4
+
+      - name: Checkout content repo
+        uses: actions/checkout@v4
+        with:
+          repository: TobiasHofmaenner/t-microcement-content
+          path: .content-checkout
+          ref: main
+
+      - name: Merge content into builder workspace
+        run: |
+          cp -r .content-checkout/content ./content
+          cp -r .content-checkout/static ./static
+          ls -la content/ static/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
