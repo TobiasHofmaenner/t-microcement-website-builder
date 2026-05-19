@@ -1,0 +1,19 @@
+baseURL = 'https://www.t-microcement.com/'
+languageCode = 'en'
+defaultContentLanguage = 'en'
+title = 'T-Microcement'
+
+[params]
+  description = 'Microcement finishes for walls, floors, bathrooms and kitchens.'
+  email = 'hello@t-microcement.com'
+  phone = '+41 00 000 00 00'
+
+[minify]
+  minifyOutput = true
+
+[markup.goldmark.renderer]
+  unsafe = true
+
+[outputs]
+  home = ['HTML']
+  page = ['HTML']
