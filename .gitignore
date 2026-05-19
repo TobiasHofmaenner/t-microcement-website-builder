@@ -7,3 +7,4 @@ resources/
 # never committed. CI populates them by cp from .content-checkout/.
 /content
 /static
+/assets

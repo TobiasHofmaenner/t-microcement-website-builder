@@ -33,8 +33,9 @@ jobs:
       - name: Merge content into builder workspace
         run: |
           cp -r .content-checkout/content ./content
-          cp -r .content-checkout/static ./static
-          ls -la content/ static/
+          cp -r .content-checkout/static  ./static
+          cp -r .content-checkout/assets  ./assets
+          ls -la content/ static/ assets/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

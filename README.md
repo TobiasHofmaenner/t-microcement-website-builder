@@ -12,6 +12,7 @@ in a sibling repo:
               │ t-microcement-content   │   (customer-facing,
               │   content/*.md          │    public, edit freely)
               │   static/*.{jpg,svg}    │
+              │   assets/css/main.css   │
               └────────────┬────────────┘
                            │ checked out at build time
                            ▼
@@ -19,7 +20,7 @@ in a sibling repo:
               │ t-microcement-website-  │   (this repo, operator-owned,
               │ -builder                │    controls what code runs)
               │   Dockerfile            │
-              │   layouts/, assets/     │
+              │   layouts/              │
               │   hugo.toml             │
               │   .github/workflows/    │
               └────────────┬────────────┘
@@ -33,13 +34,28 @@ in a sibling repo:
 
 ## Why two repos
 
-- **Trust boundary** — customer can edit content freely without touching
-  what code runs in the cluster. The Dockerfile, GH Actions workflow,
-  and layouts stay locked to operator review.
+- **Trust boundary** — customer can edit content / static / CSS freely
+  without touching what code runs in the cluster. The Dockerfile, GH
+  Actions workflow, and Hugo layouts stay locked to operator review.
+  The boundary is intentionally drawn at "things that build an image"
+  vs "things the image renders" — note that this *does not* sandbox the
+  content repo from injecting HTML/JS into the served site (Hugo's
+  goldmark `unsafe = true` is on, so raw HTML in markdown renders).
+  That's the explicit trade-off — we don't try to prevent the customer
+  from injecting client-side script, only from running server-side code
+  in the cluster.
 - **Hand-off** — when the customer takes over content editing, you
   transfer ownership of the content repo only. The builder stays yours.
 - **Cleanliness** — content is the thing that changes weekly; the
   builder is the thing that changes yearly. Separate lifecycles.
+
+## Coupling notes (don't break these)
+
+- `layouts/_default/baseof.html` references `assets/css/main.css` via
+  Hugo Pipes. If the content repo renames or removes that file, the
+  build fails. Keep the filename stable.
+- `hugo.toml` is operator-owned. If the customer wants new front-matter
+  fields or site params surfaced, that's a builder-side change.
 
 ## Build triggers
 
@@ -61,6 +77,7 @@ manual dispatch covers it.
 git clone https://github.com/TobiasHofmaenner/t-microcement-content.git ../t-microcement-content
 ln -sf ../t-microcement-content/content ./content
 ln -sf ../t-microcement-content/static  ./static
+ln -sf ../t-microcement-content/assets  ./assets
 
 hugo server -D    # http://localhost:1313
 ```
