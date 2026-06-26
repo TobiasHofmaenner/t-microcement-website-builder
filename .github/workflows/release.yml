@@ -4,19 +4,15 @@ on:
   # Triggered when the builder itself changes (Dockerfile, layouts, etc.)
   push:
     branches: [main]
-  # Manual rebuild — Actions tab → Run workflow.
+  # Triggered by the content repo's notify-builder workflow via the
+  # workflow_dispatch API (fine-grained PAT scoped to Actions:write
+  # only — content can fire builds but cannot push code or modify
+  # the build, preserving the two-repo isolation). Also used for
+  # manual rebuilds: Actions tab → Run workflow.
   workflow_dispatch:
-  # Fired from the content repo on every push to its main branch (via
-  # `peter-evans/repository-dispatch`). Carries no payload — the
-  # builder just rebuilds against `content@main` HEAD. Latency from
-  # `git push` on the content repo to the build starting here is a
-  # few seconds.
-  repository_dispatch:
-    types: [content-changed]
   # Daily safety-net rebuild — catches the rare case where a
-  # repository_dispatch was dropped (network blip, PAT expiry) or
-  # somehow never fired. Used to be hourly; once repository_dispatch
-  # is reliable this can probably go away entirely.
+  # workflow_dispatch was dropped (PAT expiry, content-side workflow
+  # broken). Was hourly before the dispatch path existed.
   schedule:
     - cron: '17 4 * * *'
 
