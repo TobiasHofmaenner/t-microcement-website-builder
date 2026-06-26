@@ -4,13 +4,21 @@ on:
   # Triggered when the builder itself changes (Dockerfile, layouts, etc.)
   push:
     branches: [main]
-  # Manual rebuild — useful right after a content commit if you don't
-  # want to wait for the scheduled run. (Actions tab → Run workflow.)
+  # Manual rebuild — Actions tab → Run workflow.
   workflow_dispatch:
-  # Hourly rebuild — picks up changes from the content repo since the
-  # last build. v1 trade-off: avoids the cross-repo PAT/App setup.
+  # Fired from the content repo on every push to its main branch (via
+  # `peter-evans/repository-dispatch`). Carries no payload — the
+  # builder just rebuilds against `content@main` HEAD. Latency from
+  # `git push` on the content repo to the build starting here is a
+  # few seconds.
+  repository_dispatch:
+    types: [content-changed]
+  # Daily safety-net rebuild — catches the rare case where a
+  # repository_dispatch was dropped (network blip, PAT expiry) or
+  # somehow never fired. Used to be hourly; once repository_dispatch
+  # is reliable this can probably go away entirely.
   schedule:
-    - cron: '17 * * * *'
+    - cron: '17 4 * * *'
 
 permissions:
   contents: read
