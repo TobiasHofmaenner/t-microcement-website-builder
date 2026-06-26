@@ -76,3 +76,28 @@ jobs:
         run: |
           echo "Pushed: ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Pushed: ${{ steps.meta.outputs.image }}:latest" >> "$GITHUB_STEP_SUMMARY"
+
+      # Pings the cluster's Flux notification-controller so it rescans
+      # GHCR immediately instead of waiting for its natural scan tick.
+      # Especially useful for the hourly scheduled rebuild — content-only
+      # changes show up minutes faster.
+      #
+      # Safe to remove: the cluster keeps polling on its own; this step
+      # is purely a latency optimization.
+      - name: Notify Flux to rescan ImageRepository
+        if: success()
+        env:
+          WEBHOOK_URL: https://flux-webhook.thfops.net/hook/57de0284cc8fc9fe0d7e4a6795ba4b729aa7ea8e626ef9ec755b1fe0b1166d7a
+          WEBHOOK_SECRET: ${{ secrets.THFOPS_RESCAN_HMAC }}
+        run: |
+          BODY=$(jq -nc \
+            --arg sha "$GITHUB_SHA" \
+            --arg ref "$GITHUB_REF" \
+            --arg run "$GITHUB_RUN_ID" \
+            --arg event "$GITHUB_EVENT_NAME" \
+            '{trigger:"ghcr-push", commit:$sha, ref:$ref, run_id:$run, event:$event}')
+          SIG="sha256=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" -hex | awk '{print $NF}')"
+          curl -sSf --max-time 10 -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "X-Signature: $SIG" \
+            -d "$BODY"
